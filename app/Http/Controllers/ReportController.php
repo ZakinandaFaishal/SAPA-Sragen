@@ -37,21 +37,42 @@ class ReportController extends Controller
     /**
      * Menampilkan aduan publik.
      */
-    public function public()
+    public function public(Request $request)
     {
-        $reports = Complaint::with(['user', 'category'])
+        $reportsQuery = Complaint::query()
+            ->with(['user', 'category'])
             ->where('status', '!=', 'ditolak')
-            ->when(request('search'), function ($query) {
-                return $query->where(function ($q) {
-                    $q->where('title', 'like', '%' . request('search') . '%')
-                        ->orWhere('description', 'like', '%' . request('search') . '%')
-                        ->orWhere('location', 'like', '%' . request('search') . '%');
+            ->when($request->filled('search'), function ($query) use ($request) {
+                $search = trim((string) $request->input('search'));
+                return $query->where(function ($q) use ($search) {
+                    $q->where('title', 'like', '%' . $search . '%')
+                        ->orWhere('description', 'like', '%' . $search . '%')
+                        ->orWhere('location', 'like', '%' . $search . '%')
+                        ->orWhere('ticket_code', 'like', '%' . $search . '%');
                 });
             })
-            ->orderBy('created_at', 'desc')
-            ->paginate(12);
+            ->when($request->filled('district'), function ($query) use ($request) {
+                $district = trim((string) $request->input('district'));
+                // Lokasi disimpan sebagai: "{address}, Desa {village}, Kec. {district}"
+                return $query->where('location', 'like', '%Kec. ' . $district . '%');
+            })
+            ->when($request->filled('category_id'), function ($query) use ($request) {
+                $categoryId = $request->input('category_id');
+                if (is_numeric($categoryId)) {
+                    return $query->where('category_id', (int) $categoryId);
+                }
+                return $query;
+            })
+            ->orderBy('created_at', 'desc');
 
-        return view('reports.public', compact('reports'));
+        $reports = $reportsQuery->paginate(12)->withQueryString();
+
+        $categories = Category::query()
+            ->where('is_active', true)
+            ->orderBy('name')
+            ->get();
+
+        return view('reports.public', compact('reports', 'categories'));
     }
 
     /**

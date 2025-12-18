@@ -39,43 +39,28 @@
                         <select id="district" name="district"
                             class="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent">
                             <option value="">Semua Kecamatan</option>
-                            <option value="Masaran" {{ request('district') == 'Masaran' ? 'selected' : '' }}>Masaran
-                            </option>
-                            <option value="Sragen Kota" {{ request('district') == 'Sragen Kota' ? 'selected' : '' }}>Sragen
-                                Kota</option>
-                            <option value="Gondang" {{ request('district') == 'Gondang' ? 'selected' : '' }}>Gondang
-                            </option>
-                            <option value="Sambungmacan" {{ request('district') == 'Sambungmacan' ? 'selected' : '' }}>
-                                Sambungmacan</option>
-                            <option value="Kalijambe" {{ request('district') == 'Kalijambe' ? 'selected' : '' }}>Kalijambe
-                            </option>
+                            <option value="Sragen" {{ request('district') == 'Sragen' ? 'selected' : '' }}>Sragen</option>
+                            <option value="Kedawung" {{ request('district') == 'Kedawung' ? 'selected' : '' }}>Kedawung</option>
+                            <option value="Kalijambe" {{ request('district') == 'Kalijambe' ? 'selected' : '' }}>Kalijambe</option>
                             <option value="Plupuh" {{ request('district') == 'Plupuh' ? 'selected' : '' }}>Plupuh</option>
-                            <option value="Sidoharjo" {{ request('district') == 'Sidoharjo' ? 'selected' : '' }}>Sidoharjo
-                            </option>
+                            <option value="Masaran" {{ request('district') == 'Masaran' ? 'selected' : '' }}>Masaran</option>
+                            <option value="Sidoharjo" {{ request('district') == 'Sidoharjo' ? 'selected' : '' }}>Sidoharjo</option>
                             <option value="Tanon" {{ request('district') == 'Tanon' ? 'selected' : '' }}>Tanon</option>
-                            <option value="Gemolong" {{ request('district') == 'Gemolong' ? 'selected' : '' }}>Gemolong
-                            </option>
-                            <option value="Miri" {{ request('district') == 'Miri' ? 'selected' : '' }}>Miri</option>
+                            <option value="Gemolong" {{ request('district') == 'Gemolong' ? 'selected' : '' }}>Gemolong</option>
                         </select>
                     </div>
 
                     <!-- Kategori Filter -->
                     <div class="md:col-span-3">
                         <label for="category" class="block text-sm font-medium text-gray-700 mb-2">Kategori</label>
-                        <select id="category" name="category"
+                        <select id="category" name="category_id"
                             class="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent">
                             <option value="">Semua</option>
-                            <option value="infrastruktur" {{ request('category') == 'infrastruktur' ? 'selected' : '' }}>
-                                Infrastruktur</option>
-                            <option value="kesehatan" {{ request('category') == 'kesehatan' ? 'selected' : '' }}>Kesehatan
-                            </option>
-                            <option value="lingkungan" {{ request('category') == 'lingkungan' ? 'selected' : '' }}>
-                                Lingkungan</option>
-                            <option value="keamanan" {{ request('category') == 'keamanan' ? 'selected' : '' }}>Keamanan
-                            </option>
-                            <option value="sosial" {{ request('category') == 'sosial' ? 'selected' : '' }}>Sosial</option>
-                            <option value="administrasi" {{ request('category') == 'administrasi' ? 'selected' : '' }}>
-                                Administrasi</option>
+                            @foreach($categories as $category)
+                                <option value="{{ $category->id }}" {{ (string) request('category_id') === (string) $category->id ? 'selected' : '' }}>
+                                    {{ $category->name }}
+                                </option>
+                            @endforeach
                         </select>
                     </div>
 
