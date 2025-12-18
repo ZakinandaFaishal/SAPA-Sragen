@@ -39,43 +39,28 @@
                         <select id="district" name="district"
                             class="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent">
                             <option value="">Semua Kecamatan</option>
-                            <option value="Masaran" {{ request('district') == 'Masaran' ? 'selected' : '' }}>Masaran
-                            </option>
-                            <option value="Sragen Kota" {{ request('district') == 'Sragen Kota' ? 'selected' : '' }}>Sragen
-                                Kota</option>
-                            <option value="Gondang" {{ request('district') == 'Gondang' ? 'selected' : '' }}>Gondang
-                            </option>
-                            <option value="Sambungmacan" {{ request('district') == 'Sambungmacan' ? 'selected' : '' }}>
-                                Sambungmacan</option>
-                            <option value="Kalijambe" {{ request('district') == 'Kalijambe' ? 'selected' : '' }}>Kalijambe
-                            </option>
+                            <option value="Sragen" {{ request('district') == 'Sragen' ? 'selected' : '' }}>Sragen</option>
+                            <option value="Kedawung" {{ request('district') == 'Kedawung' ? 'selected' : '' }}>Kedawung</option>
+                            <option value="Kalijambe" {{ request('district') == 'Kalijambe' ? 'selected' : '' }}>Kalijambe</option>
                             <option value="Plupuh" {{ request('district') == 'Plupuh' ? 'selected' : '' }}>Plupuh</option>
-                            <option value="Sidoharjo" {{ request('district') == 'Sidoharjo' ? 'selected' : '' }}>Sidoharjo
-                            </option>
+                            <option value="Masaran" {{ request('district') == 'Masaran' ? 'selected' : '' }}>Masaran</option>
+                            <option value="Sidoharjo" {{ request('district') == 'Sidoharjo' ? 'selected' : '' }}>Sidoharjo</option>
                             <option value="Tanon" {{ request('district') == 'Tanon' ? 'selected' : '' }}>Tanon</option>
-                            <option value="Gemolong" {{ request('district') == 'Gemolong' ? 'selected' : '' }}>Gemolong
-                            </option>
-                            <option value="Miri" {{ request('district') == 'Miri' ? 'selected' : '' }}>Miri</option>
+                            <option value="Gemolong" {{ request('district') == 'Gemolong' ? 'selected' : '' }}>Gemolong</option>
                         </select>
                     </div>
 
                     <!-- Kategori Filter -->
                     <div class="md:col-span-3">
                         <label for="category" class="block text-sm font-medium text-gray-700 mb-2">Kategori</label>
-                        <select id="category" name="category"
+                        <select id="category" name="category_id"
                             class="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent">
                             <option value="">Semua</option>
-                            <option value="infrastruktur" {{ request('category') == 'infrastruktur' ? 'selected' : '' }}>
-                                Infrastruktur</option>
-                            <option value="kesehatan" {{ request('category') == 'kesehatan' ? 'selected' : '' }}>Kesehatan
-                            </option>
-                            <option value="lingkungan" {{ request('category') == 'lingkungan' ? 'selected' : '' }}>
-                                Lingkungan</option>
-                            <option value="keamanan" {{ request('category') == 'keamanan' ? 'selected' : '' }}>Keamanan
-                            </option>
-                            <option value="sosial" {{ request('category') == 'sosial' ? 'selected' : '' }}>Sosial</option>
-                            <option value="administrasi" {{ request('category') == 'administrasi' ? 'selected' : '' }}>
-                                Administrasi</option>
+                            @foreach($categories as $category)
+                                <option value="{{ $category->id }}" {{ (string) request('category_id') === (string) $category->id ? 'selected' : '' }}>
+                                    {{ $category->name }}
+                                </option>
+                            @endforeach
                         </select>
                     </div>
 
@@ -101,8 +86,11 @@
                         class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden hover:shadow-lg transition">
                         <!-- Image -->
                         <div class="relative h-48 bg-gray-200">
-                            @if ($report->attachments && is_array($report->attachments) && count($report->attachments) > 0)
-                                <img src="{{ Storage::url($report->attachments[0]['path']) }}" alt="{{ $report->title }}"
+                            @if ($report->images && count($report->images) > 0)
+                                <img src="{{ asset('storage/' . $report->images[0]) }}" alt="{{ $report->title }}"
+                                    class="w-full h-full object-cover">
+                            @elseif ($report->image)
+                                <img src="{{ asset('storage/' . $report->image) }}" alt="{{ $report->title }}"
                                     class="w-full h-full object-cover">
                             @else
                                 <div
@@ -134,7 +122,7 @@
                                             d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z">
                                         </path>
                                     </svg>
-                                    {{ ucfirst($report->category) }}
+                                    {{ $report->category->name ?? 'Umum' }}
                                 </span>
                                 <span class="text-xs text-gray-500 flex items-center">
                                     <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -144,7 +132,7 @@
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                             d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
                                     </svg>
-                                    {{ $report->district }}
+                                    {{ Str::limit($report->location, 20) }}
                                 </span>
                             </div>
 

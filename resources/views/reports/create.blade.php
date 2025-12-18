@@ -68,7 +68,19 @@
                         <label for="category_id" class="block text-sm font-medium text-gray-700 mb-2">
                             Kategori <span class="text-red-500">*</span>
                         </label>
+                        @php
+                            $categoryInfo = $categories->map(function ($c) {
+                                return [
+                                    'id' => $c->id,
+                                    'name' => $c->name,
+                                    'description' => $c->description,
+                                    'examples' => $c->examples,
+                                    'opd_target' => $c->opd_target,
+                                ];
+                            })->values();
+                        @endphp
                         <select id="category_id" name="category_id"
+                            data-category-info='@json($categoryInfo)'
                             class="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent @error('category_id') border-red-500 @enderror"
                             required>
                             <option value="">Pilih Kategori Laporan</option>
@@ -84,6 +96,29 @@
                         @error('category_id')
                             <p class="text-xs text-red-500 mt-1">{{ $message }}</p>
                         @enderror
+
+                        <!-- Informasi Subkategori (Info saja, bukan input) -->
+                        <div id="category-info" class="hidden mt-3 bg-blue-50 border border-blue-200 rounded-lg p-4">
+                            <div class="flex items-start space-x-3">
+                                <svg class="w-5 h-5 text-blue-600 mt-0.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                </svg>
+                                <div class="text-sm">
+                                    <p class="font-semibold text-blue-900 mb-1">Info Subkategori</p>
+                                    <p id="category-desc" class="text-blue-800"></p>
+
+                                    <div id="category-examples-wrap" class="mt-2">
+                                        <p class="font-semibold text-blue-900">Contoh Subkategori:</p>
+                                        <p id="category-examples" class="text-blue-800"></p>
+                                    </div>
+
+                                    <div id="category-opd-wrap" class="mt-2">
+                                        <p class="font-semibold text-blue-900">OPD Tujuan (Email Mapping):</p>
+                                        <p id="category-opd" class="text-blue-800"></p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
 
                     <div class="mb-5">
@@ -182,28 +217,40 @@
 
                     <div class="mb-4">
                         <label class="block text-sm font-medium text-gray-700 mb-2">
-                            Upload Foto (Wajib ada minimal 1 foto)
+                            Upload Foto (Wajib ada minimal 1 foto) <span class="text-red-500">*</span>
                         </label>
-                        <div class="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center hover:border-teal-500 transition cursor-pointer bg-gray-50">
-                            <input type="file" id="files" name="files[]" multiple accept="image/*,.pdf"
-                                class="hidden" onchange="handleFileSelect(event)">
-                            <label for="files" class="cursor-pointer">
-                                <svg class="w-12 h-12 text-gray-400 mx-auto mb-3" fill="none" stroke="currentColor"
-                                    viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12">
-                                    </path>
-                                </svg>
-                                <p class="text-sm font-medium text-gray-900 mb-1">Klik untuk pilih foto</p>
-                            </label>
+                        <div id="upload-area" class="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center hover:border-teal-500 transition cursor-pointer bg-gray-50"
+                            onclick="document.getElementById('files').click()">
+                            <input type="file" id="files" name="files[]" multiple accept="image/*"
+                                class="hidden">
+                            <svg class="w-12 h-12 text-gray-400 mx-auto mb-3" fill="none" stroke="currentColor"
+                                viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12">
+                                </path>
+                            </svg>
+                            <p class="text-sm font-medium text-gray-900 mb-1">Klik untuk pilih foto</p>
+                            <p class="text-xs text-gray-500">Anda dapat memilih lebih dari 1 foto (PNG, JPG, JPEG, max 5MB per foto)</p>
                         </div>
                         @error('files')
                              <p class="text-xs text-red-500 mt-1">{{ $message }}</p>
                         @enderror
+                        @error('files.*')
+                             <p class="text-xs text-red-500 mt-1">{{ $message }}</p>
+                        @enderror
                     </div>
 
-                    <div id="file-preview" class="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4 hidden">
+                    <!-- Preview Images -->
+                    <div id="file-preview" class="hidden mt-4">
+                        <div class="flex items-center justify-between mb-3">
+                            <p class="text-sm font-medium text-gray-700">Preview Foto (<span id="file-count">0</span> foto terpilih)</p>
+                            <button type="button" onclick="clearAllFiles()" class="text-sm text-red-600 hover:text-red-700 font-medium">
+                                Hapus Semua
+                            </button>
                         </div>
+                        <div id="preview-container" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                        </div>
+                    </div>
                 </div>
 
                 <div class="flex items-center justify-end space-x-4">
@@ -226,36 +273,182 @@
 
     @push('scripts')
         <script>
-            function handleFileSelect(event) {
-                const files = event.target.files;
-                const preview = document.getElementById('file-preview');
+            let CATEGORY_INFO = [];
 
-                if (files.length > 0) {
-                    preview.classList.remove('hidden');
-                    preview.innerHTML = '';
+            let selectedFiles = [];
 
-                    Array.from(files).forEach((file, index) => {
-                        const div = document.createElement('div');
-                        div.className = 'relative bg-gray-100 rounded-lg p-4 border border-gray-200';
+            // Event listener untuk file input
+            document.addEventListener('DOMContentLoaded', function() {
+                const fileInput = document.getElementById('files');
+                const categorySelect = document.getElementById('category_id');
 
-                        if (file.type.startsWith('image/')) {
-                            const reader = new FileReader();
-                            reader.onload = function(e) {
-                                div.innerHTML = `
-                        <img src="${e.target.result}" class="w-full h-24 object-cover rounded mb-2">
-                        <p class="text-xs text-gray-600 truncate">${file.name}</p>
-                    `;
-                            };
-                            reader.readAsDataURL(file);
-                        } else {
-                            div.innerHTML = `
-                    <p class="text-xs text-gray-600 truncate">${file.name}</p>
-                `;
-                        }
-
-                        preview.appendChild(div);
-                    });
+                if (categorySelect && categorySelect.dataset && categorySelect.dataset.categoryInfo) {
+                    try {
+                        CATEGORY_INFO = JSON.parse(categorySelect.dataset.categoryInfo);
+                    } catch (e) {
+                        CATEGORY_INFO = [];
+                    }
                 }
+                
+                fileInput.addEventListener('change', function(event) {
+                    handleFileSelect(event);
+                });
+
+                if (categorySelect) {
+                    categorySelect.addEventListener('change', function() {
+                        updateCategoryInfo();
+                    });
+                    updateCategoryInfo();
+                }
+                
+                console.log('Upload script loaded successfully');
+            });
+
+            function updateCategoryInfo() {
+                const categorySelect = document.getElementById('category_id');
+                const infoBox = document.getElementById('category-info');
+                const descEl = document.getElementById('category-desc');
+                const examplesWrap = document.getElementById('category-examples-wrap');
+                const examplesEl = document.getElementById('category-examples');
+                const opdWrap = document.getElementById('category-opd-wrap');
+                const opdEl = document.getElementById('category-opd');
+
+                if (!categorySelect || !infoBox || !descEl) return;
+
+                const selectedId = categorySelect.value;
+                if (!selectedId) {
+                    infoBox.classList.add('hidden');
+                    return;
+                }
+
+                const category = CATEGORY_INFO.find(c => String(c.id) === String(selectedId));
+                if (!category) {
+                    infoBox.classList.add('hidden');
+                    return;
+                }
+
+                descEl.textContent = category.description || '';
+
+                const examples = category.examples || '';
+                if (examplesWrap && examplesEl) {
+                    if (examples.trim().length > 0) {
+                        examplesWrap.classList.remove('hidden');
+                        examplesEl.textContent = examples;
+                    } else {
+                        examplesWrap.classList.add('hidden');
+                    }
+                }
+
+                const opdTarget = category.opd_target || '';
+                if (opdWrap && opdEl) {
+                    if (opdTarget.trim().length > 0) {
+                        opdWrap.classList.remove('hidden');
+                        opdEl.textContent = opdTarget;
+                    } else {
+                        opdWrap.classList.add('hidden');
+                    }
+                }
+
+                infoBox.classList.remove('hidden');
+            }
+
+            function handleFileSelect(event) {
+                const files = Array.from(event.target.files);
+                
+                console.log('Files selected:', files.length);
+
+                files.forEach(file => {
+                    if (file.type.startsWith('image/')) {
+                        if (file.size <= 5120 * 1024) {
+                            selectedFiles.push(file);
+                            console.log('Added file:', file.name, 'Size:', (file.size / 1024).toFixed(1) + ' KB');
+                        } else {
+                            alert(`File ${file.name} terlalu besar (max 5MB)`);
+                        }
+                    }
+                });
+
+                updatePreview();
+                updateFileInput();
+            }
+
+            function removeFile(index) {
+                console.log('Removing file at index:', index);
+                selectedFiles.splice(index, 1);
+                updatePreview();
+                updateFileInput();
+            }
+
+            function clearAllFiles() {
+                if (confirm('Hapus semua foto yang sudah dipilih?')) {
+                    selectedFiles = [];
+                    updatePreview();
+                    updateFileInput();
+                }
+            }
+
+            function updatePreview() {
+                const previewSection = document.getElementById('file-preview');
+                const previewContainer = document.getElementById('preview-container');
+                const fileCount = document.getElementById('file-count');
+                
+                console.log('Updating preview. Total files:', selectedFiles.length);
+                
+                if (selectedFiles.length > 0) {
+                    previewSection.classList.remove('hidden');
+                    previewContainer.innerHTML = '';
+                    fileCount.textContent = selectedFiles.length;
+
+                    selectedFiles.forEach((file, index) => {
+                        const div = document.createElement('div');
+                        div.className = 'relative bg-white rounded-lg overflow-hidden border-2 border-gray-200 hover:border-teal-500 transition group shadow-sm';
+
+                        const reader = new FileReader();
+                        reader.onload = function(e) {
+                            div.innerHTML = `
+                                <div class="relative aspect-square">
+                                    <img src="${e.target.result}" class="w-full h-full object-cover">
+                                    <div class="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-50 transition-all flex items-center justify-center">
+                                        <button type="button" 
+                                            onclick="removeFile(${index})" 
+                                            class="opacity-0 group-hover:opacity-100 transition-all bg-red-500 hover:bg-red-600 text-white rounded-full p-2 transform hover:scale-110 shadow-lg">
+                                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                                            </svg>
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="p-2 bg-gray-50">
+                                    <p class="text-xs text-gray-700 truncate font-medium" title="${file.name}">${file.name}</p>
+                                    <p class="text-xs text-gray-500">${(file.size / 1024).toFixed(1)} KB</p>
+                                </div>
+                            `;
+                        };
+                        
+                        reader.onerror = function(error) {
+                            console.error('Error reading file:', error);
+                        };
+                        
+                        reader.readAsDataURL(file);
+
+                        previewContainer.appendChild(div);
+                    });
+                } else {
+                    previewSection.classList.add('hidden');
+                    console.log('No files to preview');
+                }
+            }
+
+            function updateFileInput() {
+                const input = document.getElementById('files');
+                const dataTransfer = new DataTransfer();
+                
+                selectedFiles.forEach(file => {
+                    dataTransfer.items.add(file);
+                });
+                
+                input.files = dataTransfer.files;
+                console.log('File input updated. Files count:', input.files.length);
             }
         </script>
     @endpush

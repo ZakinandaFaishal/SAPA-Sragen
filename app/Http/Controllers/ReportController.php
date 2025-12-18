@@ -37,21 +37,42 @@ class ReportController extends Controller
     /**
      * Menampilkan aduan publik.
      */
-    public function public()
+    public function public(Request $request)
     {
-        $reports = Complaint::with(['user', 'category'])
+        $reportsQuery = Complaint::query()
+            ->with(['user', 'category'])
             ->where('status', '!=', 'ditolak')
-            ->when(request('search'), function ($query) {
-                return $query->where(function ($q) {
-                    $q->where('title', 'like', '%' . request('search') . '%')
-                        ->orWhere('description', 'like', '%' . request('search') . '%')
-                        ->orWhere('location', 'like', '%' . request('search') . '%');
+            ->when($request->filled('search'), function ($query) use ($request) {
+                $search = trim((string) $request->input('search'));
+                return $query->where(function ($q) use ($search) {
+                    $q->where('title', 'like', '%' . $search . '%')
+                        ->orWhere('description', 'like', '%' . $search . '%')
+                        ->orWhere('location', 'like', '%' . $search . '%')
+                        ->orWhere('ticket_code', 'like', '%' . $search . '%');
                 });
             })
-            ->orderBy('created_at', 'desc')
-            ->paginate(12);
+            ->when($request->filled('district'), function ($query) use ($request) {
+                $district = trim((string) $request->input('district'));
+                // Lokasi disimpan sebagai: "{address}, Desa {village}, Kec. {district}"
+                return $query->where('location', 'like', '%Kec. ' . $district . '%');
+            })
+            ->when($request->filled('category_id'), function ($query) use ($request) {
+                $categoryId = $request->input('category_id');
+                if (is_numeric($categoryId)) {
+                    return $query->where('category_id', (int) $categoryId);
+                }
+                return $query;
+            })
+            ->orderBy('created_at', 'desc');
 
-        return view('reports.public', compact('reports'));
+        $reports = $reportsQuery->paginate(12)->withQueryString();
+
+        $categories = Category::query()
+            ->where('is_active', true)
+            ->orderBy('name')
+            ->get();
+
+        return view('reports.public', compact('reports', 'categories'));
     }
 
     /**
@@ -75,14 +96,21 @@ class ReportController extends Controller
             'district' => 'required|string',
             'village' => 'required|string',
             'address' => 'required|string',
-            'files.*' => 'nullable|image|mimes:jpg,jpeg,png|max:5120',
+            'files' => 'required|array|min:1',
+            'files.*' => 'required|image|mimes:jpg,jpeg,png|max:5120',
         ]);
 
-        $imagePath = null;
+        // Upload multiple images
+        $imagePaths = [];
         if ($request->hasFile('files')) {
-            $file = $request->file('files')[0]; 
-            $imagePath = $file->store('aduan-images', 'public'); 
+            foreach ($request->file('files') as $file) {
+                $path = $file->store('aduan-images', 'public');
+                $imagePaths[] = $path;
+            }
         }
+
+        // Backward compatibility - simpan first image ke kolom image
+        $imagePath = !empty($imagePaths) ? $imagePaths[0] : null;
 
         $categoryId = $request->category_id;
         if (!is_numeric($request->category_id)) {
@@ -93,12 +121,13 @@ class ReportController extends Controller
         $fullLocation = $validated['address'] . ', Desa ' . $validated['village'] . ', Kec. ' . $validated['district'];
 
         $complaint = Complaint::create([
-            'user_id' => Auth::id(), // GANTI JADI Auth::id()
+            'user_id' => Auth::id(),
             'category_id' => $categoryId,
             'title' => $validated['title'],
             'description' => $validated['description'],
             'location' => $fullLocation,
             'image' => $imagePath, 
+            'images' => $imagePaths,
             'status' => 'pending', 
         ]);
 

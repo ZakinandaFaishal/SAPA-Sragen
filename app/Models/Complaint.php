@@ -48,12 +48,14 @@ class Complaint extends Model
         'description',
         'location',
         'image',
+        'images',
         'status',
     ];
 
     protected $casts = [
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
+        'images' => 'array',
     ];
 
     /**
@@ -104,5 +106,35 @@ class Complaint extends Model
     public function responses(): HasMany
     {
         return $this->hasMany(ComplaintResponse::class);
+    }
+
+    /**
+     * Get status label in Indonesian.
+     */
+    public function getStatusLabelAttribute(): string
+    {
+        return match($this->status) {
+            'pending' => 'Menunggu',
+            'proses' => 'Diproses',
+            'menunggu_validasi' => 'Menunggu Validasi',
+            'selesai' => 'Selesai',
+            'ditolak' => 'Ditolak',
+            default => ucfirst($this->status),
+        };
+    }
+
+    /**
+     * Get status color classes for badge.
+     */
+    public function getStatusColorAttribute(): string
+    {
+        return match($this->status) {
+            'pending' => 'bg-yellow-100 text-yellow-800',
+            'proses' => 'bg-blue-100 text-blue-800',
+            'menunggu_validasi' => 'bg-purple-100 text-purple-800',
+            'selesai' => 'bg-green-100 text-green-800',
+            'ditolak' => 'bg-red-100 text-red-800',
+            default => 'bg-gray-100 text-gray-800',
+        };
     }
 }
