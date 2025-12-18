@@ -184,26 +184,29 @@
                         <label class="block text-sm font-medium text-gray-700 mb-2">
                             Upload Foto (Wajib ada minimal 1 foto)
                         </label>
-                        <div class="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center hover:border-teal-500 transition cursor-pointer bg-gray-50">
-                            <input type="file" id="files" name="files[]" multiple accept="image/*,.pdf"
+                        <div class="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center hover:border-teal-500 transition cursor-pointer bg-gray-50"
+                            onclick="document.getElementById('files').click()">
+                            <input type="file" id="files" name="files[]" multiple accept="image/*"
                                 class="hidden" onchange="handleFileSelect(event)">
-                            <label for="files" class="cursor-pointer">
-                                <svg class="w-12 h-12 text-gray-400 mx-auto mb-3" fill="none" stroke="currentColor"
-                                    viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12">
-                                    </path>
-                                </svg>
-                                <p class="text-sm font-medium text-gray-900 mb-1">Klik untuk pilih foto</p>
-                            </label>
+                            <svg class="w-12 h-12 text-gray-400 mx-auto mb-3" fill="none" stroke="currentColor"
+                                viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12">
+                                </path>
+                            </svg>
+                            <p class="text-sm font-medium text-gray-900 mb-1">Klik untuk pilih foto</p>
+                            <p class="text-xs text-gray-500">Anda dapat memilih lebih dari 1 foto (PNG, JPG, JPEG, max 5MB per foto)</p>
                         </div>
                         @error('files')
                              <p class="text-xs text-red-500 mt-1">{{ $message }}</p>
                         @enderror
+                        @error('files.*')
+                             <p class="text-xs text-red-500 mt-1">{{ $message }}</p>
+                        @enderror
                     </div>
 
-                    <div id="file-preview" class="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4 hidden">
-                        </div>
+                    <div id="file-preview" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 mt-4 hidden">
+                    </div>
                 </div>
 
                 <div class="flex items-center justify-end space-x-4">
@@ -226,37 +229,97 @@
 
     @push('scripts')
         <script>
+            let selectedFiles = [];
+
             function handleFileSelect(event) {
-                const files = event.target.files;
+                const files = Array.from(event.target.files);
                 const preview = document.getElementById('file-preview');
 
-                if (files.length > 0) {
+                console.log('Files selected:', files.length);
+
+                // Tambahkan file baru ke array
+                files.forEach(file => {
+                    if (file.type.startsWith('image/')) {
+                        selectedFiles.push(file);
+                        console.log('Added file:', file.name, 'Size:', file.size);
+                    }
+                });
+
+                updatePreview();
+            }
+
+            function removeFile(index) {
+                console.log('Removing file at index:', index);
+                selectedFiles.splice(index, 1);
+                updatePreview();
+                updateFileInput();
+            }
+
+            function updatePreview() {
+                const preview = document.getElementById('file-preview');
+                
+                console.log('Updating preview. Total files:', selectedFiles.length);
+                
+                if (selectedFiles.length > 0) {
                     preview.classList.remove('hidden');
                     preview.innerHTML = '';
 
-                    Array.from(files).forEach((file, index) => {
+                    selectedFiles.forEach((file, index) => {
                         const div = document.createElement('div');
-                        div.className = 'relative bg-gray-100 rounded-lg p-4 border border-gray-200';
+                        div.className = 'relative bg-gray-100 rounded-lg overflow-hidden border-2 border-gray-200 hover:border-teal-500 transition group';
 
-                        if (file.type.startsWith('image/')) {
-                            const reader = new FileReader();
-                            reader.onload = function(e) {
-                                div.innerHTML = `
-                        <img src="${e.target.result}" class="w-full h-24 object-cover rounded mb-2">
-                        <p class="text-xs text-gray-600 truncate">${file.name}</p>
-                    `;
-                            };
-                            reader.readAsDataURL(file);
-                        } else {
+                        const reader = new FileReader();
+                        reader.onload = function(e) {
                             div.innerHTML = `
-                    <p class="text-xs text-gray-600 truncate">${file.name}</p>
-                `;
-                        }
+                                <div class="relative">
+                                    <img src="${e.target.result}" class="w-full h-32 object-cover">
+                                    <div class="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-40 transition flex items-center justify-center">
+                                        <button type="button" 
+                                            onclick="removeFile(${index})" 
+                                            class="opacity-0 group-hover:opacity-100 transition bg-red-500 hover:bg-red-600 text-white rounded-full p-2 transform hover:scale-110">
+                                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                                            </svg>
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="p-2">
+                                    <p class="text-xs text-gray-600 truncate" title="${file.name}">${file.name}</p>
+                                    <p class="text-xs text-gray-400">${(file.size / 1024).toFixed(1)} KB</p>
+                                </div>
+                            `;
+                        };
+                        
+                        reader.onerror = function(error) {
+                            console.error('Error reading file:', error);
+                        };
+                        
+                        reader.readAsDataURL(file);
 
                         preview.appendChild(div);
                     });
+                } else {
+                    preview.classList.add('hidden');
+                    console.log('No files to preview');
                 }
             }
+
+            function updateFileInput() {
+                const input = document.getElementById('files');
+                const dataTransfer = new DataTransfer();
+                
+                selectedFiles.forEach(file => {
+                    dataTransfer.items.add(file);
+                });
+                
+                input.files = dataTransfer.files;
+                console.log('File input updated. Files count:', input.files.length);
+            }
+
+            // Log saat halaman dimuat
+            document.addEventListener('DOMContentLoaded', function() {
+                console.log('Upload script loaded successfully');
+            });
         </script>
     @endpush
 

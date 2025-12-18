@@ -75,14 +75,21 @@ class ReportController extends Controller
             'district' => 'required|string',
             'village' => 'required|string',
             'address' => 'required|string',
-            'files.*' => 'nullable|image|mimes:jpg,jpeg,png|max:5120',
+            'files' => 'required|array|min:1',
+            'files.*' => 'required|image|mimes:jpg,jpeg,png|max:5120',
         ]);
 
-        $imagePath = null;
+        // Upload multiple images
+        $imagePaths = [];
         if ($request->hasFile('files')) {
-            $file = $request->file('files')[0]; 
-            $imagePath = $file->store('aduan-images', 'public'); 
+            foreach ($request->file('files') as $file) {
+                $path = $file->store('aduan-images', 'public');
+                $imagePaths[] = $path;
+            }
         }
+
+        // Backward compatibility - simpan first image ke kolom image
+        $imagePath = !empty($imagePaths) ? $imagePaths[0] : null;
 
         $categoryId = $request->category_id;
         if (!is_numeric($request->category_id)) {
@@ -93,12 +100,13 @@ class ReportController extends Controller
         $fullLocation = $validated['address'] . ', Desa ' . $validated['village'] . ', Kec. ' . $validated['district'];
 
         $complaint = Complaint::create([
-            'user_id' => Auth::id(), // GANTI JADI Auth::id()
+            'user_id' => Auth::id(),
             'category_id' => $categoryId,
             'title' => $validated['title'],
             'description' => $validated['description'],
             'location' => $fullLocation,
             'image' => $imagePath, 
+            'images' => $imagePaths,
             'status' => 'pending', 
         ]);
 

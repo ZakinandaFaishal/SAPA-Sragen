@@ -2,8 +2,9 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Report;
+use App\Models\Complaint;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 
 class DashboardController extends Controller
 {
@@ -14,25 +15,27 @@ class DashboardController extends Controller
      */
     public function index()
     {
-        $userId = auth()->id();
+        $userId = Auth::id();
 
-        // Fetch user's reports statistics
-        $totalReports = Report::where('user_id', $userId)->count();
-        $processingReports = Report::where('user_id', $userId)
-            ->whereIn('status', ['pending', 'verified', 'processing'])
+        // Fetch user's complaints statistics
+        $totalReports = Complaint::where('user_id', $userId)->count();
+        $processingReports = Complaint::where('user_id', $userId)
+            ->whereIn('status', ['pending', 'proses'])
             ->count();
-        $completedReports = Report::where('user_id', $userId)
-            ->whereIn('status', ['resolved', 'completed'])
+        $completedReports = Complaint::where('user_id', $userId)
+            ->where('status', 'selesai')
             ->count();
 
-        // Fetch user's recent reports
-        $recentReports = Report::where('user_id', $userId)
+        // Fetch user's recent complaints
+        $recentReports = Complaint::where('user_id', $userId)
+            ->with('category')
             ->orderBy('created_at', 'desc')
             ->take(5)
             ->get();
 
-        // Fetch public recent reports for inspiration
-        $publicReports = Report::where('is_public', true)
+        // Fetch public recent complaints for inspiration
+        $publicReports = Complaint::with(['user', 'category'])
+            ->where('status', '!=', 'ditolak')
             ->orderBy('created_at', 'desc')
             ->take(3)
             ->get();

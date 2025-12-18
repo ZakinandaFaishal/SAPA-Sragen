@@ -122,7 +122,7 @@
                             @forelse($recentReports as $report)
                                 <tr class="hover:bg-gray-50 transition">
                                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                        #{{ $report->ticket_number }}</td>
+                                        {{ $report->ticket_code }}</td>
                                     <td class="px-6 py-4 text-sm text-gray-900">{{ $report->title }}</td>
                                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
                                         <div class="flex items-center space-x-1">
@@ -143,7 +143,7 @@
                                                     d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z">
                                                 </path>
                                             </svg>
-                                            {{ ucfirst($report->category) }}
+                                            {{ $report->category->name ?? 'Umum' }}
                                         </span>
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap text-sm">
@@ -292,12 +292,15 @@
                             class="block p-4 border border-gray-200 rounded-lg hover:shadow-lg transition">
                             <div class="flex items-start space-x-3 mb-3">
                                 <span
-                                    class="px-2.5 py-0.5 rounded text-xs font-semibold {{ $publicReport->status == 'completed' ? 'bg-green-100 text-green-800' : ($publicReport->status == 'processing' ? 'bg-yellow-100 text-yellow-800' : 'bg-blue-100 text-blue-800') }}">
+                                    class="px-2.5 py-0.5 rounded text-xs font-semibold {{ $publicReport->status_color }}">
                                     {{ $publicReport->status_label }}
+                                </span>
+                                <span class="px-2.5 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800">
+                                    {{ $publicReport->category->name ?? 'Umum' }}
                                 </span>
                             </div>
                             <h4 class="text-sm font-bold text-gray-900 mb-2 line-clamp-2">{{ $publicReport->title }}</h4>
-                            <p class="text-xs text-gray-500 mb-2">{{ $publicReport->description }}</p>
+                            <p class="text-xs text-gray-500 mb-2 line-clamp-2">{{ Str::limit($publicReport->description, 80) }}</p>
                             <div class="flex items-center justify-between text-xs text-gray-500">
                                 <div class="flex items-center space-x-1">
                                     <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -307,7 +310,7 @@
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                             d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
                                     </svg>
-                                    <span>{{ $publicReport->district }}</span>
+                                    <span>{{ Str::limit($publicReport->location, 25) }}</span>
                                 </div>
                                 <div class="flex items-center space-x-1">
                                     <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
