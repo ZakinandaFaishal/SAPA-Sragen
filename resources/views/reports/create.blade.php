@@ -256,10 +256,8 @@
                 
                 console.log('Files selected:', files.length);
 
-                // Tambahkan file baru ke array (tidak replace yang sudah ada)
                 files.forEach(file => {
                     if (file.type.startsWith('image/')) {
-                        // Cek ukuran file (max 5MB)
                         if (file.size <= 5120 * 1024) {
                             selectedFiles.push(file);
                             console.log('Added file:', file.name, 'Size:', (file.size / 1024).toFixed(1) + ' KB');
